@@ -5,7 +5,7 @@ import os
 
 from sklearn.neighbors import KNeighborsClassifier
 
-os.add_dll_directory(r'C:\Users\Lize\Downloads\openslide-win64-20230414\openslide-win64-20230414\bin')
+os.add_dll_directory(r'\esat\biomeddata\kkontras\r0786880\data\openslide-win64-20230414\bin')
 import openslide
 import numpy as np
 from sklearn.cluster import KMeans
@@ -169,7 +169,7 @@ def split_in_tiles(slide_to_split, original_slide, tile_size, level, location):
 
 def safe_tiles(tiles, level):
     cols, rows = tiles.level_tiles[level]
-    tile_dir = r'C:\Users\Lize\Desktop\School\Master\thesis\tiles'
+    tile_dir = r'\esat\biomeddata\kkontras\r0786880\data\tiles'
     for row in range(rows):
         for col in range(cols):
             temp_tile = tiles.get_tile(level, (col, row))
@@ -279,35 +279,36 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     fixed_img_file_name = Path(path_fixed_image)  # Change the file extension to .mrxs
     moving_img_file_name = Path(path_moving_image)  # Change the file extension to .mrxs
 
+    # Assuming you have your MRXS files stored on your local PC, update the file paths accordingly.
+
     # For fixed image
     fixed_wsi_reader = WSIReader.open(fixed_img_file_name)
     fixed_image_rgb = fixed_wsi_reader.slide_thumbnail(resolution=0.1563, units="power")
+
 
     # For moving image
     moving_wsi_reader = WSIReader.open(moving_img_file_name)
     moving_image_rgb = moving_wsi_reader.slide_thumbnail(resolution=0.1563, units="power")
 
-    if show_images:
-        _, axs = plt.subplots(1, 2, figsize=(15, 10))
-        axs[0].imshow(fixed_image_rgb, cmap="gray")
-        axs[0].set_title("Fixed Image")
-        axs[1].imshow(moving_image_rgb, cmap="gray")
-        axs[1].set_title("Moving Image")
-        plt.show()
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(fixed_image_rgb, cmap="gray")
+    axs[0].set_title("Fixed Image")
+    axs[1].imshow(moving_image_rgb, cmap="gray")
+    axs[1].set_title("Moving Image")
+    plt.show()
 
     # Preprocessing fixed and moving images
     fixed_image = preprocess_image(fixed_image_rgb)
     moving_image = preprocess_image(moving_image_rgb)
     fixed_image, moving_image = match_histograms(fixed_image, moving_image)
 
-    if show_images:
-        # Visualising the results
-        _, axs = plt.subplots(1, 2, figsize=(15, 10))
-        axs[0].imshow(fixed_image, cmap="gray")
-        axs[0].set_title("Fixed Image")
-        axs[1].imshow(moving_image, cmap="gray")
-        axs[1].set_title("Moving Image")
-        plt.show()
+    # Visualising the results
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(fixed_image, cmap="gray")
+    axs[0].set_title("Fixed Image")
+    axs[1].imshow(moving_image, cmap="gray")
+    axs[1].set_title("Moving Image")
+    plt.show()
 
     temp = np.repeat(np.expand_dims(fixed_image, axis=2), 3, axis=2)
     _saved = cv2.imwrite(str(global_save_dir / "fixed.png"), temp)
@@ -353,19 +354,18 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     fixed_mask = post_processing_mask(fixed_mask)
     moving_mask = post_processing_mask(moving_mask)
 
-    if show_images:
-        _, axs = plt.subplots(1, 2, figsize=(15, 10))
-        axs[0].imshow(fixed_mask, cmap="gray")
-        axs[0].set_title("Fixed Mask")
-        axs[1].imshow(moving_mask, cmap="gray")
-        axs[1].set_title("Moving Mask")
-        plt.show()
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(fixed_mask, cmap="gray")
+    axs[0].set_title("Fixed Mask")
+    axs[1].imshow(moving_mask, cmap="gray")
+    axs[1].set_title("Moving Mask")
+    plt.show()
 
     dfbr_fixed_image = np.repeat(np.expand_dims(fixed_image, axis=2), 3, axis=2)
     dfbr_moving_image = np.repeat(np.expand_dims(moving_image, axis=2), 3, axis=2)
 
     dfbr = DFBRegister()
-    dfbr_transform = dfbr.register(
+    dfbr_transform,before_dice,after_dice = dfbr.register(
         dfbr_fixed_image,
         dfbr_moving_image,
         fixed_mask,
@@ -383,21 +383,53 @@ def align(path_moving_image, path_fixed_image, show_images=False):
         dfbr_transform[0:-1],
         fixed_image.shape[:2][::-1],
     )
+    dfbr_registered_mask = cv2.warpAffine(
+        moving_mask,
+        dfbr_transform[0:-1],
+        fixed_image.shape[:2][::-1],
+    )
 
     before_overlay = np.dstack((original_moving, fixed_image, original_moving))
     dfbr_overlay = np.dstack((dfbr_registered_image, fixed_image, dfbr_registered_image))
-    if show_images:
-        _, axs = plt.subplots(1, 2, figsize=(15, 10))
-        axs[0].imshow(before_overlay, cmap="gray")
-        axs[0].set_title("Overlay Before Registration")
-        axs[1].imshow(dfbr_overlay, cmap="gray")
-        axs[1].set_title("Overlay After DFBR")
-        plt.show()
+
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(before_overlay, cmap="gray")
+    axs[0].set_title("Overlay Before Registration")
+    axs[1].imshow(dfbr_overlay, cmap="gray")
+    axs[1].set_title("Overlay After DFBR")
+    plt.show()
+
+    location = (204768, 68656)  # at base level 0
+    # location_moving = (2524 * 32 + 44000, 2068 * 32 + 2000)  # at base level 0
+    size = (1000, 1000)  # (width, height)
+
+    # Extract region from the fixed whole slide image
+    fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=2.5, units="power")
+
+    # DFBR transform is computed for level 7
+    # Hence it should be mapped to level 0 for AffineWSITransformer
+    dfbr_transform_level = 7
+    transform_level0 = dfbr_transform * [
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 1],
+    ]
+
+    # Extract transformed region from the moving whole slide image
+    tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
+    moving_tile = tfm.read_rect(location, size, resolution=2.5, units="power")
+
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(fixed_tile, cmap="gray")
+    axs[0].set_title("Fixed Tile")
+    axs[1].imshow(moving_tile, cmap="gray")
+    axs[1].set_title("Moving Tile")
+    plt.show()
 
     return dfbr_transform, fixed_wsi_reader, moving_wsi_reader
 
 
-def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size):
+def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
 
     slide = load_image(path_fixed_image)
@@ -419,8 +451,6 @@ def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, m
 
     # Extract transformed region from the moving whole slide image
     tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
-    tile_dir_fixed = r'C:\Users\Lize\Desktop\School\Master\thesis\tiles_fixed'
-    tile_dir_moving = r'C:\Users\Lize\Desktop\School\Master\thesis\tiles_moving'
 
     tile_names = []
 
@@ -553,8 +583,7 @@ def KNN(tile, data, labels, cluster_centers, K=5, show_images=False):
     return predicted_labels
 
 
-def soft_labeling(tile_names, data, labels, cluster_centers):
-    tile_dir_moving = r'C:\Users\Lize\Desktop\School\Master\thesis\tiles_moving'
+def soft_labeling(tile_names, data, labels, cluster_centers,tile_dir_moving):
     soft_labels = []
     for image in tile_names:
         tile_name_moving = os.path.join(tile_dir_moving, image)
@@ -572,12 +601,11 @@ def soft_labeling(tile_names, data, labels, cluster_centers):
     return soft_labels
 
 
-def create_dataset(tile_names, soft_labels):
+def create_dataset(tile_names, soft_labels, location_data_csv):
     #data = zip(tile_names, soft_labels)
     data = zip(tile_names,*zip(*soft_labels))
-    csv_file_path = r"C:\Users\Lize\Desktop\School\Master\thesis\dataset.csv"
     # Write to CSV file
-    with open(csv_file_path, 'w', newline='') as csvfile:
+    with open(location_data_csv, 'w', newline='') as csvfile:
         # Create a CSV writer object
         csv_writer = csv.writer(csvfile)
 
