@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import csv
-import os
 
 from sklearn.neighbors import KNeighborsClassifier
 
-os.add_dll_directory(r'\esat\biomeddata\kkontras\r0786880\data\openslide-win64-20230414\bin')
-import openslide
-import numpy as np
+#import openslide
 from sklearn.cluster import KMeans
 from PIL import Image
 import math
-from matplotlib import pyplot as plt
+
 
 # Clear logger to use tiatoolbox.logger
 import logging
