@@ -2,14 +2,13 @@
   "name": "Configuration",
   "version": "1.0.0",
   "paths_server": {
+    "path_images_HE": "/esat/biomeddata/kkontras/r0786880/data/Microbiome CRC/BB-1860002_01-04_HE_20221018",
+    "path_images_MUC": "/esat/biomeddata/kkontras/r0786880/data/Microbiome CRC/B-1860002_01-04_CDX2p_MUC2y_MUC5g_CD8dab_20221018",
     "path_images": "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies/Janssen",
     "tile_dir_fixed" : "/esat/biomeddata/kkontras/r0786880/data/tiles_fixed",
     "tile_dir_moving": "/esat/biomeddata/kkontras/r0786880/data/tiles_moving",
     "path_data_csv": "/esat/biomeddata/kkontras/r0786880/data/dataset.csv",
     "path_kmeans_image" : "/esat/biomeddata/kkontras/r0786880/data/kmeans.png"
-  },
-  "paths_local": {
-    "path_images" : "C:/Users/Lize/Desktop/School/Master/thesis/biopsy data hospital"
   },
   "variables": {
     "size" : [512,512]

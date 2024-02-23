@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import csv
+import cv2
+import os
 
 from sklearn.neighbors import KNeighborsClassifier
 
-#import openslide
+import openslide
 from sklearn.cluster import KMeans
 from PIL import Image
 import math
@@ -362,7 +364,7 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     dfbr_moving_image = np.repeat(np.expand_dims(moving_image, axis=2), 3, axis=2)
 
     dfbr = DFBRegister()
-    dfbr_transform,before_dice,after_dice = dfbr.register(
+    dfbr_transform = dfbr.register(
         dfbr_fixed_image,
         dfbr_moving_image,
         fixed_mask,
@@ -377,11 +379,6 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     )
     dfbr_registered_image = cv2.warpAffine(
         moving_image,
-        dfbr_transform[0:-1],
-        fixed_image.shape[:2][::-1],
-    )
-    dfbr_registered_mask = cv2.warpAffine(
-        moving_mask,
         dfbr_transform[0:-1],
         fixed_image.shape[:2][::-1],
     )
