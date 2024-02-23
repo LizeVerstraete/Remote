@@ -48,7 +48,7 @@ transform = transforms.Compose([
 #dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 if __name__ == "__main__":
-    config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/configuration"
+    config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/config_dataloader.json"
     with open(config_filename,'r') as config_json:
         a = json.load(config_json)
         config = EasyDict(a)
