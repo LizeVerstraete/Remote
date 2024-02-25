@@ -1,7 +1,0 @@
-{
-  "name": "preprocessing",
-  "version": "1.0.0",
-  "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
-  "tile_path" : "/esat/biomeddata/kkontras/r0786880/data",
-  "size": [512,512]
-}

@@ -10,7 +10,12 @@
     "path_data_csv": "/esat/biomeddata/kkontras/r0786880/data/dataset.csv",
     "path_kmeans_image" : "/esat/biomeddata/kkontras/r0786880/data/kmeans.png"
   },
+  "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
+  "tile_path" : "/esat/biomeddata/kkontras/r0786880/data",
   "variables": {
-    "size" : [512,512]
+    "size_image" : [512,512],
+    "batch_size" : 32,
+    "lr": 0.001,
+    "epochs": 100
   }
 }

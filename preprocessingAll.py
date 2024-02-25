@@ -2,16 +2,16 @@
 import functions
 import os
 import json
-from easydict import EasyDict
 
-config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/config_preprocessing.json"
+
+config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/configuration.json"
 with open(config_filename, 'r') as config_json:
-    a = json.load(config_json)
-    config = EasyDict(a)
+    config = json.load(config_json)
 
-path_biopsies = config.path_biopsies
-tile_path = config.tile_path
-size = config.size
+
+path_biopsies = config["path_biopsies"]
+tile_path = config["tile_path"]
+size = config["variables"]["size_image"]
 
 biopsy_sets = os.listdir(path_biopsies)
 for biopsy_set in biopsy_sets:
@@ -38,12 +38,21 @@ for biopsy_set in biopsy_sets:
         if os.path.exists(path_fixed_image.replace('.mrxs', '')):
             tile_path_fixed = os.path.join(tile_path,patient_biopsy_fixed.replace('.mrxs', ''))
             tile_path_moving = os.path.join(tile_path,patient_biopsy_moving.replace('.mrxs',''))
+            #Create maps to store the tiles per dataset and per patient -> can be adapted to store per label (MSS vs MSI)
             if not os.path.exists(tile_path_fixed):
                 os.makedirs(tile_path_fixed)
             if not os.path.exists(tile_path_moving):
                 os.makedirs(tile_path_moving)
+            # #Clear maps if they allready contain tiles from previous calculations
+            # if os.listdir(tile_path_fixed):
+            #     for file in os.listdir(tile_path_fixed):
+            #         file_path = os.path.join(tile_path_fixed,file)
+            #         os.remove(file_path)
+            # if os.listdir(tile_path_moving):
+            #     for file in os.listdir(tile_path_moving):
+            #         file_path = os.path.join(tile_path_moving,file)
+            #         os.remove(file_path)
             dfbr_transform, fixed_wsi_reader, moving_wsi_reader = functions.align(path_moving_image, path_fixed_image,
                                                                                   show_images=True)
-            #Store tiles in a map corresponding to the specific patient and type of image
             functions.store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader,
                                                           moving_wsi_reader, size, tile_path_fixed, tile_path_moving)

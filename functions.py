@@ -460,10 +460,10 @@ def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, m
             if np.sum(np.any(fixed_tile != np.array([255, 255, 255]), axis=-1)) > (
                     fixed_tile.shape[0] * fixed_tile.shape[
                 1] / 2):  # only safe tile if more than half of it is not white
-                tile_name_fixed = os.path.join(tile_dir_fixed, '%d_%d' % (x, y))
+                tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x, y))
                 print("Now saving tile with title: ", tile_name_fixed)
                 plt.imsave(tile_name_fixed + ".png", fixed_tile)
-                tile_name_moving = os.path.join(tile_dir_moving, '%d_%d' % (x, y))
+                tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x, y))
                 print("Now saving tile with title: ", tile_name_moving)
                 plt.imsave(tile_name_moving + ".png", moving_tile)
                 tile_names.append(fr'{tile_dir_fixed}\{x}_{y}.png')
