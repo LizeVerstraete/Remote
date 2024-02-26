@@ -11,7 +11,8 @@ with open(config_filename, 'r') as config_json:
 
 path_biopsies = config["path_biopsies"]
 tile_path = config["tile_path"]
-size = config["variables"]["size_image"]
+size = config["variables"]["size_image"] #
+size = (int(size[0]/0.242534722222222), int(size[1]/0.242647058823529)) #convert micrometers to pixels (in 20x zoom)
 
 biopsy_sets = os.listdir(path_biopsies)
 for biopsy_set in biopsy_sets:

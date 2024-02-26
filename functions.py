@@ -393,33 +393,6 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     axs[1].set_title("Overlay After DFBR")
     plt.show()
 
-    location = (204768, 68656)  # at base level 0
-    # location_moving = (2524 * 32 + 44000, 2068 * 32 + 2000)  # at base level 0
-    size = (1000, 1000)  # (width, height)
-
-    # Extract region from the fixed whole slide image
-    fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=2.5, units="power")
-
-    # DFBR transform is computed for level 7
-    # Hence it should be mapped to level 0 for AffineWSITransformer
-    dfbr_transform_level = 7
-    transform_level0 = dfbr_transform * [
-        [1, 1, 2 ** dfbr_transform_level],
-        [1, 1, 2 ** dfbr_transform_level],
-        [1, 1, 1],
-    ]
-
-    # Extract transformed region from the moving whole slide image
-    tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
-    moving_tile = tfm.read_rect(location, size, resolution=2.5, units="power")
-
-    _, axs = plt.subplots(1, 2, figsize=(15, 10))
-    axs[0].imshow(fixed_tile, cmap="gray")
-    axs[0].set_title("Fixed Tile")
-    axs[1].imshow(moving_tile, cmap="gray")
-    axs[1].set_title("Moving Tile")
-    plt.show()
-
     return dfbr_transform, fixed_wsi_reader, moving_wsi_reader
 
 
@@ -428,11 +401,13 @@ def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, m
 
     slide = load_image(path_fixed_image)
     level = 5
-    _, [ymin, ymax, xmin, xmax] = crop_image(slide, 5)  # at level 5 since lower memory-load
-    xmin = xmin * (level ** 2)
-    xmax = xmax * (level ** 2)
-    ymin = ymin * (level ** 2)
-    ymax = ymax * (level ** 2)
+    _, [ymin, ymax, xmin, xmax] = crop_image(slide, level)  # at level 5 since lower memory-load
+    xmin = xmin * ((level+1) ** 2)
+    xmax = xmax * ((level+1) ** 2)
+    ymin = ymin * ((level+1) ** 2)
+    ymax = ymax * ((level+1) ** 2)
+
+    # xmax, ymax = slide.level_dimensions[0]
 
     # DFBR transform is computed for level 7
     # Hence it should be mapped to level 0 for AffineWSITransformer
@@ -448,14 +423,14 @@ def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, m
 
     tile_names = []
 
-    for x in range(xmin, xmax, size[0] * 5):
-        for y in range(ymin, ymax, size[1] * 5):
+    for x in range(xmin, xmax, size[0]):
+        for y in range(ymin, ymax, size[1]):
             location = (x, y)  # at base level 0
 
             # Extract region from the fixed whole slide image
-            fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=0.2425,
-                                                    units="mpp")  # resolution at 20xzoom
-            moving_tile = tfm.read_rect(location, size, resolution=0.2425, units="mpp")  # resolution at 20xzoom
+            fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=20,
+                                                    units="power")  # resolution at 20xzoom
+            moving_tile = tfm.read_rect(location, size, resolution=20, units="power")  # resolution at 20xzoom
 
             if np.sum(np.any(fixed_tile != np.array([255, 255, 255]), axis=-1)) > (
                     fixed_tile.shape[0] * fixed_tile.shape[

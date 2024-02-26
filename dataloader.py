@@ -55,21 +55,6 @@ class Biopsy_Dataset(Dataset):
     def __len__(self):
         return len(self.image_files_MUC)
 
-class ImageTranslationModel(nn.Module):
-    def __init__(self):
-        super(ImageTranslationModel,self).__init__()
-        self.encoder = nn.Sequential(
-
-        )
-
-        self.decoder = nn.Sequential(
-
-        )
-
-    def forward(self,x):
-        x = self.encoder(x)
-        x = self.decoder(x)
-        return x
 
 def check_permute(image):
     #If image is in (C,H,W) format, it needs to be rearranged to (H,W,C) format
@@ -101,7 +86,7 @@ biopsy_dataset = Biopsy_Dataset(config,transform)
 dataloader = DataLoader(biopsy_dataset,config.variables.batch_size)
 
 device = ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-model = ImageTranslationModel()
+model = torch.hub.load('pytorch/vision:v0.10.0', 'shufflenet_v2_x1_0', pretrained=True)
 model.to(device)
 optimizer = optim.Adam(model.parameters(),lr=config.variables.lr)
 
