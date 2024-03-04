@@ -36,7 +36,7 @@ for biopsy_set in biopsy_sets:
         path_fixed_image = os.path.join(path_biopsy_set,patient_biopsy_fixed)
         path_moving_image = os.path.join(path_biopsy_set,patient_biopsy_moving)
         #check whether all the needed data is present (both the map and the .mrxs are needed)
-        if os.path.exists(path_fixed_image.replace('.mrxs', '')):
+        if os.path.exists(path_fixed_image.replace('.mrxs', '')) and os.path.exists(path_moving_image.replace('.mrxs', '')):
             tile_path_fixed = os.path.join(tile_path,patient_biopsy_fixed.replace('.mrxs', ''))
             tile_path_moving = os.path.join(tile_path,patient_biopsy_moving.replace('.mrxs',''))
             #Create maps to store the tiles per dataset and per patient -> can be adapted to store per label (MSS vs MSI)
@@ -45,15 +45,19 @@ for biopsy_set in biopsy_sets:
             if not os.path.exists(tile_path_moving):
                 os.makedirs(tile_path_moving)
             # #Clear maps if they allready contain tiles from previous calculations
-            # if os.listdir(tile_path_fixed):
-            #     for file in os.listdir(tile_path_fixed):
-            #         file_path = os.path.join(tile_path_fixed,file)
-            #         os.remove(file_path)
-            # if os.listdir(tile_path_moving):
-            #     for file in os.listdir(tile_path_moving):
-            #         file_path = os.path.join(tile_path_moving,file)
-            #         os.remove(file_path)
+            if os.listdir(tile_path_fixed):
+                for file in os.listdir(tile_path_fixed):
+                    file_path = os.path.join(tile_path_fixed,file)
+                    os.remove(file_path)
+            if os.listdir(tile_path_moving):
+                for file in os.listdir(tile_path_moving):
+                    file_path = os.path.join(tile_path_moving,file)
+                    os.remove(file_path)
             dfbr_transform, fixed_wsi_reader, moving_wsi_reader = functions.align(path_moving_image, path_fixed_image,
                                                                                   show_images=True)
-            functions.store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader,
-                                                          moving_wsi_reader, size, tile_path_fixed, tile_path_moving)
+            functions.store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader,
+                                                             moving_wsi_reader, size, tile_path_fixed, tile_path_moving)
+    # Start with only two patients
+            if index == 1:
+                break
+    break

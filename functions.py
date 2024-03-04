@@ -289,12 +289,13 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     moving_wsi_reader = WSIReader.open(moving_img_file_name)
     moving_image_rgb = moving_wsi_reader.slide_thumbnail(resolution=0.1563, units="power")
 
-    _, axs = plt.subplots(1, 2, figsize=(15, 10))
-    axs[0].imshow(fixed_image_rgb, cmap="gray")
-    axs[0].set_title("Fixed Image")
-    axs[1].imshow(moving_image_rgb, cmap="gray")
-    axs[1].set_title("Moving Image")
-    plt.show()
+    if show_images:
+        _, axs = plt.subplots(1, 2, figsize=(15, 10))
+        axs[0].imshow(fixed_image_rgb, cmap="gray")
+        axs[0].set_title("Fixed Image")
+        axs[1].imshow(moving_image_rgb, cmap="gray")
+        axs[1].set_title("Moving Image")
+        plt.show()
 
     # Preprocessing fixed and moving images
     fixed_image = preprocess_image(fixed_image_rgb)
@@ -302,12 +303,13 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     fixed_image, moving_image = match_histograms(fixed_image, moving_image)
 
     # Visualising the results
-    _, axs = plt.subplots(1, 2, figsize=(15, 10))
-    axs[0].imshow(fixed_image, cmap="gray")
-    axs[0].set_title("Fixed Image")
-    axs[1].imshow(moving_image, cmap="gray")
-    axs[1].set_title("Moving Image")
-    plt.show()
+    if show_images:
+        _, axs = plt.subplots(1, 2, figsize=(15, 10))
+        axs[0].imshow(fixed_image, cmap="gray")
+        axs[0].set_title("Fixed Image")
+        axs[1].imshow(moving_image, cmap="gray")
+        axs[1].set_title("Moving Image")
+        plt.show()
 
     temp = np.repeat(np.expand_dims(fixed_image, axis=2), 3, axis=2)
     _saved = cv2.imwrite(str(global_save_dir / "fixed.png"), temp)
@@ -353,12 +355,13 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     fixed_mask = post_processing_mask(fixed_mask)
     moving_mask = post_processing_mask(moving_mask)
 
-    _, axs = plt.subplots(1, 2, figsize=(15, 10))
-    axs[0].imshow(fixed_mask, cmap="gray")
-    axs[0].set_title("Fixed Mask")
-    axs[1].imshow(moving_mask, cmap="gray")
-    axs[1].set_title("Moving Mask")
-    plt.show()
+    if show_images:
+        _, axs = plt.subplots(1, 2, figsize=(15, 10))
+        axs[0].imshow(fixed_mask, cmap="gray")
+        axs[0].set_title("Fixed Mask")
+        axs[1].imshow(moving_mask, cmap="gray")
+        axs[1].set_title("Moving Mask")
+        plt.show()
 
     dfbr_fixed_image = np.repeat(np.expand_dims(fixed_image, axis=2), 3, axis=2)
     dfbr_moving_image = np.repeat(np.expand_dims(moving_image, axis=2), 3, axis=2)
@@ -386,17 +389,24 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     before_overlay = np.dstack((original_moving, fixed_image, original_moving))
     dfbr_overlay = np.dstack((dfbr_registered_image, fixed_image, dfbr_registered_image))
 
-    _, axs = plt.subplots(1, 2, figsize=(15, 10))
-    axs[0].imshow(before_overlay, cmap="gray")
-    axs[0].set_title("Overlay Before Registration")
-    axs[1].imshow(dfbr_overlay, cmap="gray")
-    axs[1].set_title("Overlay After DFBR")
-    plt.show()
+    if show_images:
+        _, axs = plt.subplots(1, 2, figsize=(15, 10))
+        axs[0].imshow(before_overlay, cmap="gray")
+        axs[0].set_title("Overlay Before Registration")
+        axs[1].imshow(dfbr_overlay, cmap="gray")
+        axs[1].set_title("Overlay After DFBR")
+        plt.show()
 
     return dfbr_transform, fixed_wsi_reader, moving_wsi_reader
 
+def normalize_image(image):
+    # Convert image to float32 if not already
+    image = image.astype(np.float32)
+    # Normalize pixel values to range [0, 1]
+    image_normalized = (image - np.min(image)) / (np.max(image) - np.min(image))
+    return image_normalized
 
-def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
+def store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
 
     slide = load_image(path_fixed_image)
@@ -422,7 +432,7 @@ def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, m
     tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
 
     tile_names = []
-
+    print(xmax,ymax)
     for x in range(xmin, xmax, size[0]):
         for y in range(ymin, ymax, size[1]):
             location = (x, y)  # at base level 0
@@ -437,9 +447,11 @@ def store_registered_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, m
                 1] / 2):  # only safe tile if more than half of it is not white
                 tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x, y))
                 print("Now saving tile with title: ", tile_name_fixed)
+                fixed_tile = normalize_image(fixed_tile)
                 plt.imsave(tile_name_fixed + ".png", fixed_tile)
                 tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x, y))
                 print("Now saving tile with title: ", tile_name_moving)
+                moving_tile = normalize_image(moving_tile)
                 plt.imsave(tile_name_moving + ".png", moving_tile)
                 tile_names.append(fr'{tile_dir_fixed}\{x}_{y}.png')
     return tile_names

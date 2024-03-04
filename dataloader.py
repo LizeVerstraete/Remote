@@ -5,10 +5,8 @@ from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 import json
 from easydict import EasyDict
-import torch.nn as nn
-import numpy
-import torch
-import torch.optim as optim
+from torch.utils.data.sampler import SubsetRandomSampler
+from sklearn.model_selection import train_test_split
 
 class Biopsy_Dataset(Dataset):
     #Example code for one patient
@@ -25,13 +23,15 @@ class Biopsy_Dataset(Dataset):
         self.transform = transform
         self.config = config
         self.tile_folders = sorted([file for file in Path(config.tile_path).glob('*')])
-        self.image_files_HE = []
-        self.image_files_MUC = []
+        self.image_folders_HE = []
+        self.image_folders_MUC = []
         for tile_folder in self.tile_folders:
-            image_files_HE_current = sorted([file for file in tile_folder.glob('*HE*')])
-            self.image_files_HE.extend(image_files_HE_current)
-            image_files_MUC_current = sorted([file for file in tile_folder.glob('*MUC*')])
-            self.image_files_MUC.extend(image_files_MUC_current)
+            image_folders_HE_current = sorted([file for file in tile_folder.glob('*HE*')])
+            self.image_folders_HE.extend(image_folders_HE_current)
+            image_folders_MUC_current = sorted([file for file in tile_folder.glob('*MUC*')])
+            self.image_folders_MUC.extend(image_folders_MUC_current)
+        self.image_files_HE = sorted([file for directory in self.image_folders_HE for file in directory.glob('*')])
+        self.image_files_MUC = sorted([file for directory in self.image_folders_MUC for file in directory.glob('*')])
         assert len(self.image_files_HE) == len(self.image_files_MUC), "You need equally much HE and MUC images"
 
     def __getitem__(self, idx):
@@ -67,39 +67,49 @@ transform = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.ToTensor(),
 ])
+class Biopsy_Dataloader:
+    def __init__(self,dataset,batch_size = 32,test_size = 0.1, val_size = 0.1):
+        self.dataset = dataset
+        self.batch_size = batch_size
 
-config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/configuration.json"
-with open(config_filename, 'r') as config_json:
-    a = json.load(config_json)
-    config = EasyDict(a)
+        patients = [str(patient_folder.stem) for patient_folder in dataset.image_folders_HE]
 
-biopsy_dataset = Biopsy_Dataset(config, transform)
+        train_patients, test_val_patients = train_test_split(patients, test_size=test_size+val_size, random_state=42)
+        val_patients, test_patients = train_test_split(test_val_patients, test_size=test_size/(test_size+val_size), random_state=42)
+
+        train_indices = [idx for idx, patient_folder in enumerate(dataset.image_folders_HE) if
+                         patient_folder.stem in train_patients]
+        val_indices = [idx for idx, patient_folder in enumerate(dataset.image_folders_HE) if
+                       patient_folder.stem in val_patients]
+        test_indices = [idx for idx, patient_folder in enumerate(dataset.image_folders_HE) if
+                        patient_folder.stem in test_patients]
+
+        # Define samplers and dataloaders
+        self.train_sampler = SubsetRandomSampler(train_indices)
+        self.val_sampler = SubsetRandomSampler(val_indices)
+        self.test_sampler = SubsetRandomSampler(test_indices)
+
+        self.train_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.train_sampler)
+        self.val_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.val_sampler)
+        self.test_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.test_sampler)
+
+    def get_train_loader(self):
+        return self.train_loader
+
+    def get_val_loader(self):
+        return self.val_loader
+
+    def get_test_loader(self):
+        return self.test_loader
+
 #Give an example plot of what a set of HE - MUC image looks like
 if __name__ == "__main__":
+    config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/configuration.json"
+    with open(config_filename, 'r') as config_json:
+        a = json.load(config_json)
+        config = EasyDict(a)
+    biopsy_dataset = Biopsy_Dataset(config, transform)
     plt.imshow(biopsy_dataset[0]["image_HE"])
     plt.show()
     plt.imshow(biopsy_dataset[0]["image_MUC"])
     plt.show()
-
-#Start of the training of the model, might want to put this in separate file
-biopsy_dataset = Biopsy_Dataset(config,transform)
-dataloader = DataLoader(biopsy_dataset,config.variables.batch_size)
-
-device = ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-model = torch.hub.load('pytorch/vision:v0.10.0', 'shufflenet_v2_x1_0', pretrained=True)
-model.to(device)
-optimizer = optim.Adam(model.parameters(),lr=config.variables.lr)
-
-MSE = nn.MSELoss()
-
-#CHECK WHETHER THIS WAY OF LOADING HE AND MUC IN THE FOR LOOP WORKS
-for epoch in range(config.variables.epochs):
-    for HE_images, MUC_images in dataloader:
-        HE_images = HE_images.to(device)
-        MUC_images = MUC_images.to(device)
-        generated_MUC = model(HE_images)
-        loss = MSE(generated_MUC,MUC_images)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
