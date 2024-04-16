@@ -1,19 +1,12 @@
 {
   "name": "Configuration",
   "version": "1.0.0",
-  "paths_server": {
-    "path_images_HE": "/esat/biomeddata/kkontras/r0786880/data/Microbiome CRC/BB-1860002_01-04_HE_20221018",
-    "path_images_MUC": "/esat/biomeddata/kkontras/r0786880/data/Microbiome CRC/B-1860002_01-04_CDX2p_MUC2y_MUC5g_CD8dab_20221018",
-    "path_images": "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies/Janssen",
-    "tile_dir_fixed" : "/esat/biomeddata/kkontras/r0786880/data/tiles_fixed",
-    "tile_dir_moving": "/esat/biomeddata/kkontras/r0786880/data/tiles_moving",
-    "path_data_csv": "/esat/biomeddata/kkontras/r0786880/data/dataset.csv",
-    "path_kmeans_image" : "/esat/biomeddata/kkontras/r0786880/data/kmeans.png"
-  },
-  "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
-  "tile_path" : "/esat/biomeddata/kkontras/r0786880/data",
+  "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies/Janssen",
+  "tile_path" : "/esat/biomeddata/kkontras/r0786880/biopsy_data",
+  "tile_path_filtered": "/esat/biomeddata/kkontras/r0786880/biopsy_data_filtered",
+  "tile_path_filtered_aligned": "/esat/biomeddata/kkontras/r0786880/biopsy_data_filtered_aligned_small",
   "variables": {
-    "size_image" : [600,600],
+    "size_image" : [100,100],
     "batch_size" : 32,
     "lr": 0.001,
     "epochs": 100

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="r0786880@localhost:6000 password (7)" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="r0786880@localhost:6000 password (28)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="r0786880@localhost:6000 password">
         <serverdata>
@@ -9,10 +9,143 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="r0786880@localhost:6000 password (10)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (11)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (12)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (13)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (14)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (15)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (16)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (17)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (18)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (19)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="r0786880@localhost:6000 password (2)">
         <serverdata>
           <mappings>
             <mapping deploy="/tmp/pycharm_project_229/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (20)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (21)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (22)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_59" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (23)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (24)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (25)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (26)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (27)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (28)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
@@ -48,6 +181,20 @@
         <serverdata>
           <mappings>
             <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (8)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="r0786880@localhost:6000 password (9)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

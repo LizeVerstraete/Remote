@@ -9,14 +9,6 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from sklearn.model_selection import train_test_split
 
 class Biopsy_Dataset(Dataset):
-    #Example code for one patient
-    # def __init__(self, config,transform=None):
-    #     self.transform = transform
-    #     self.config = config
-    #     self.image_folder_HE = Path(config.paths_server.path_images_HE)
-    #     self.image_folder_MUC = Path(config.paths_server.path_images_MUC)
-    #     self.image_files_HE = [file for file in self.image_folder_HE.glob('*')]
-    #     self.image_files_MUC = [file for file in self.image_folder_MUC.glob('*')]
 
     def __init__(self, config,transform=None):
         #super(Biopsy_Dataset).__init__()
@@ -32,7 +24,7 @@ class Biopsy_Dataset(Dataset):
             self.image_folders_MUC.extend(image_folders_MUC_current)
         self.image_files_HE = sorted([file for directory in self.image_folders_HE for file in directory.glob('*')])
         self.image_files_MUC = sorted([file for directory in self.image_folders_MUC for file in directory.glob('*')])
-        assert len(self.image_files_HE) == len(self.image_files_MUC), "You need equally much HE and MUC images"
+        #assert len(self.image_files_HE) == len(self.image_files_MUC), "You need equally much HE and MUC images"
 
     def __getitem__(self, idx):
         image_path_HE = self.image_files_HE[idx]
@@ -50,8 +42,8 @@ class Biopsy_Dataset(Dataset):
             if check_permute(image_MUC):
                 image_MUC = image_MUC.permute(1, 2, 0)
 
-        return {'image_HE':image_HE, 'image_MUC' : image_MUC, 'image_path_HE': image_path_HE, 'image_path_MUC': image_path_MUC}
-
+        #return {'image_HE':image_HE, 'image_MUC' : image_MUC, 'image_path_HE': image_path_HE, 'image_path_MUC': image_path_MUC}
+        return {'image_HE': image_HE, 'image_MUC': image_MUC}
     def __len__(self):
         return len(self.image_files_MUC)
 

@@ -1,23 +1,22 @@
 # Transform wsi images into small tiles in png format
-import functions
+import preprocessing_functions
 import os
 import json
-
 
 config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/configuration.json"
 with open(config_filename, 'r') as config_json:
     config = json.load(config_json)
 
-
+remove_existing_files = False
 path_biopsies = config["path_biopsies"]
-tile_path = config["tile_path"]
+tile_path_init = config["tile_path_filtered"]
 size = config["variables"]["size_image"] #
 size = (int(size[0]/0.242534722222222), int(size[1]/0.242647058823529)) #convert micrometers to pixels (in 20x zoom)
 
 biopsy_sets = os.listdir(path_biopsies)
 for biopsy_set in biopsy_sets:
     path_biopsy_set = os.path.join(path_biopsies,biopsy_set)
-    tile_path = os.path.join(tile_path, biopsy_set)
+    tile_path = os.path.join(tile_path_init, biopsy_set)
     patient_biopsies = os.listdir(path_biopsy_set)
     patient_biopsies_fixed = sorted([biopsy for biopsy in patient_biopsies if 'HE' in biopsy and biopsy.lower().endswith('.mrxs')])
     patient_biopsies_moving = sorted([biopsy for biopsy in patient_biopsies if 'MUC' in biopsy and biopsy.lower().endswith('.mrxs')])
@@ -45,19 +44,13 @@ for biopsy_set in biopsy_sets:
             if not os.path.exists(tile_path_moving):
                 os.makedirs(tile_path_moving)
             # #Clear maps if they allready contain tiles from previous calculations
-            if os.listdir(tile_path_fixed):
-                for file in os.listdir(tile_path_fixed):
-                    file_path = os.path.join(tile_path_fixed,file)
-                    os.remove(file_path)
-            if os.listdir(tile_path_moving):
-                for file in os.listdir(tile_path_moving):
-                    file_path = os.path.join(tile_path_moving,file)
-                    os.remove(file_path)
-            dfbr_transform, fixed_wsi_reader, moving_wsi_reader = functions.align(path_moving_image, path_fixed_image,
-                                                                                  show_images=True)
-            functions.store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader,
-                                                             moving_wsi_reader, size, tile_path_fixed, tile_path_moving)
-    # Start with only two patients
-            if index == 1:
-                break
-    break
+            if remove_existing_tiles:
+                if os.listdir(tile_path_fixed):
+                    for file in os.listdir(tile_path_fixed):
+                        file_path = os.path.join(tile_path_fixed,file)
+                        os.remove(file_path)
+                if os.listdir(tile_path_moving):
+                    for file in os.listdir(tile_path_moving):
+                        file_path = os.path.join(tile_path_moving,file)
+                        os.remove(file_path)
+            preprocessing_functions.store_normalized_tiles(path_fixed_image,path_moving_image, size, tile_path_fixed, tile_path_moving)

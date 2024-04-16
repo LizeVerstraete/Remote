@@ -11,7 +11,6 @@ from sklearn.cluster import KMeans
 from PIL import Image
 import math
 
-
 # Clear logger to use tiatoolbox.logger
 import logging
 
@@ -39,8 +38,8 @@ from tiatoolbox.tools.registration.wsi_registration import (
     estimate_bspline_transform,
     match_histograms,
 )
-from tiatoolbox.wsicore.wsireader import WSIReader
 
+from tiatoolbox.wsicore.wsireader import WSIReader
 
 def load_image(path, show_raw_image=False):
     """
@@ -289,7 +288,7 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     moving_wsi_reader = WSIReader.open(moving_img_file_name)
     moving_image_rgb = moving_wsi_reader.slide_thumbnail(resolution=0.1563, units="power")
 
-    if show_images:
+    if not show_images:
         _, axs = plt.subplots(1, 2, figsize=(15, 10))
         axs[0].imshow(fixed_image_rgb, cmap="gray")
         axs[0].set_title("Fixed Image")
@@ -303,7 +302,7 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     fixed_image, moving_image = match_histograms(fixed_image, moving_image)
 
     # Visualising the results
-    if show_images:
+    if not show_images:
         _, axs = plt.subplots(1, 2, figsize=(15, 10))
         axs[0].imshow(fixed_image, cmap="gray")
         axs[0].set_title("Fixed Image")
@@ -355,7 +354,7 @@ def align(path_moving_image, path_fixed_image, show_images=False):
     fixed_mask = post_processing_mask(fixed_mask)
     moving_mask = post_processing_mask(moving_mask)
 
-    if show_images:
+    if not show_images:
         _, axs = plt.subplots(1, 2, figsize=(15, 10))
         axs[0].imshow(fixed_mask, cmap="gray")
         axs[0].set_title("Fixed Mask")
@@ -433,8 +432,8 @@ def store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_r
 
     tile_names = []
     print(xmax,ymax)
-    for x in range(xmin, xmax, size[0]):
-        for y in range(ymin, ymax, size[1]):
+    for x in range(xmin, xmax, size[0]*3):#REMOVE THE *3!!!!
+        for y in range(ymin, ymax, size[1]*3):#REMOVE THE *3!!!!
             location = (x, y)  # at base level 0
 
             # Extract region from the fixed whole slide image
@@ -442,21 +441,175 @@ def store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_r
                                                     units="power")  # resolution at 20xzoom
             moving_tile = tfm.read_rect(location, size, resolution=20, units="power")  # resolution at 20xzoom
 
-            if np.sum(np.any(fixed_tile != np.array([255, 255, 255]), axis=-1)) > (
-                    fixed_tile.shape[0] * fixed_tile.shape[
-                1] / 2):  # only safe tile if more than half of it is not white
+            fixed_tile = normalize_image(fixed_tile)
+            moving_tile = normalize_image(moving_tile)
+
+            if enough_filled(fixed_tile, 0.25, 0.3) and enough_filled(moving_tile, 0.25, 0.3):
+                print('store')
                 tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x, y))
                 print("Now saving tile with title: ", tile_name_fixed)
-                fixed_tile = normalize_image(fixed_tile)
                 plt.imsave(tile_name_fixed + ".png", fixed_tile)
                 tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x, y))
                 print("Now saving tile with title: ", tile_name_moving)
-                moving_tile = normalize_image(moving_tile)
                 plt.imsave(tile_name_moving + ".png", moving_tile)
                 tile_names.append(fr'{tile_dir_fixed}\{x}_{y}.png')
     return tile_names
 
+def show_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
+    # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
 
+    slide = load_image(path_fixed_image)
+    level = 5
+    _, [ymin, ymax, xmin, xmax] = crop_image(slide, level)  # at level 5 since lower memory-load
+    xmin = xmin * ((level+1) ** 2)
+    xmax = xmax * ((level+1) ** 2)
+    ymin = ymin * ((level+1) ** 2)
+    ymax = ymax * ((level+1) ** 2)
+
+    # xmax, ymax = slide.level_dimensions[0]
+
+    # DFBR transform is computed for level 7
+    # Hence it should be mapped to level 0 for AffineWSITransformer
+    dfbr_transform_level = 7
+    transform_level0 = dfbr_transform * [
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 1],
+    ]
+
+    # Extract transformed region from the moving whole slide image
+    tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
+
+    tile_names = []
+    print(xmax,ymax)
+    for x in range(xmin, xmax, size[0]*3):#REMOVE THE *3!!!!
+        for y in range(ymin, ymax, size[1]*3):#REMOVE THE *3!!!!
+            location = (x, y)  # at base level 0
+
+            # Extract region from the fixed whole slide image
+            fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=20,
+                                                    units="power")  # resolution at 20xzoom
+            moving_tile = tfm.read_rect(location, size, resolution=20, units="power")  # resolution at 20xzoom
+
+            fixed_tile = normalize_image(fixed_tile)
+            if enough_filled(fixed_tile, 0.25, 0.3):
+                print('plot')
+                print(x,y)
+                plt.subplot(1, 2, 1)
+                plt.imshow(fixed_tile)
+                plt.title('save HE tile')
+                plt.subplot(1, 2, 2)
+                moving_tile = normalize_image(moving_tile)
+                plt.imshow(moving_tile)
+                plt.title('save MUC tile')
+                plt.show()
+    return
+
+def store_normalized_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving):
+    # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
+
+    slide_fixed = load_image(path_fixed_image)
+    level = 5
+    _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
+    xmin_fixed = xmin_fixed * ((level+1) ** 2)
+    xmax_fixed = xmax_fixed * ((level+1) ** 2)
+    ymin_fixed = ymin_fixed * ((level+1) ** 2)
+    ymax_fixed = ymax_fixed * ((level+1) ** 2)
+
+    slide_moving = load_image(path_moving_image)
+    level = 5
+    _, [ymin_moving, ymax_moving, xmin_moving, xmax_moving] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
+    xmin_moving = xmin_moving * ((level+1) ** 2)
+    xmax_moving = xmax_moving * ((level+1) ** 2)
+    ymin_moving = ymin_moving * ((level+1) ** 2)
+    ymax_moving = ymax_moving * ((level+1) ** 2)
+
+    print(xmax_fixed,ymax_fixed)
+    print(xmax_moving,ymax_moving)
+    for x_moving in range(xmin_moving, xmax_moving, size[0]):
+        for y_moving in range(ymin_moving, ymax_moving, size[1]):
+            location_moving = (x_moving, y_moving)  # at base level 0
+            # Extract region from the fixed whole slide image
+            moving_tile = slide_moving.read_region(location_moving, 0, size)  # resolution at 20xzoom
+            moving_tile = normalize_image(np.array(moving_tile))
+            if enough_filled(moving_tile, 0.25, 0.3):
+                tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x_moving, y_moving))
+                print("Now saving tile with title: ", tile_name_moving)
+                plt.imsave(tile_name_moving + ".png", moving_tile)
+    for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
+        for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
+            location_fixed = (x_fixed, y_fixed)  # at base level 0
+
+            fixed_tile = slide_fixed.read_region(location_fixed, 0, size)  # resolution at 20xzoom
+            fixed_tile = normalize_image(np.array(fixed_tile))
+
+            if enough_filled(fixed_tile, 0.25, 0.3):
+                tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x_fixed, y_fixed))
+                print("Now saving tile with title: ", tile_name_fixed)
+                plt.imsave(tile_name_fixed + ".png", fixed_tile)
+    return
+
+def show_normalized_tiles(path_fixed_image, path_moving_image, size):
+    # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
+
+    slide_fixed = load_image(path_fixed_image)
+    level = 5
+    _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
+    xmin_fixed = xmin_fixed * ((level+1) ** 2)
+    xmax_fixed = xmax_fixed * ((level+1) ** 2)
+    ymin_fixed = ymin_fixed * ((level+1) ** 2)
+    ymax_fixed = ymax_fixed * ((level+1) ** 2)
+
+    slide_moving = load_image(path_moving_image)
+    level = 5
+    _, [ymin_moving, ymax_moving, xmin_moving, xmax_moving] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
+    xmin_moving = xmin_moving * ((level+1) ** 2)
+    xmax_moving = xmax_moving * ((level+1) ** 2)
+    ymin_moving = ymin_moving * ((level+1) ** 2)
+    ymax_moving = ymax_moving * ((level+1) ** 2)
+
+    print(xmax_fixed,ymax_fixed)
+    print(xmax_moving,ymax_moving)
+    for x_moving in range(xmin_moving, xmax_moving, size[0]):
+        for y_moving in range(ymin_moving, ymax_moving, size[1]):
+            location_moving = (x_moving, y_moving)  # at base level 0
+            moving_tile = slide_moving.read_region(location_moving, 0, size)  # resolution at 20xzoom
+            moving_tile = normalize_image(np.array(moving_tile))
+            if enough_filled(moving_tile, 0.25, 0.3):
+                plt.imshow(moving_tile)
+                plt.title("save")
+                plt.show()
+            else:
+                plt.imshow(moving_tile)
+                plt.title("remove")
+                plt.show()
+
+    for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
+        for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
+            location_fixed = (x_fixed, y_fixed)
+            fixed_tile = slide_fixed.read_region(location_fixed, 0, size)  # resolution at 20xzoom
+            fixed_tile = normalize_image(np.array(fixed_tile))
+            if enough_filled(fixed_tile, 0.25, 0.3):
+                plt.imshow(fixed_tile)
+                plt.title("save")
+                plt.show()
+            else:
+                plt.imshow(fixed_tile)
+                plt.title("remove")
+                plt.show()
+    return
+
+def enough_filled(image,threshold,sample_freq):
+    width = image.shape[0]
+    height = image.shape[1]
+    total = 0
+    nb_none_white = 0
+    for y in range(0,height,max(1, math.ceil(height * sample_freq))):
+        for x in range(0,width,max(1, math.ceil(width * sample_freq))):
+            total += 1
+            if 0.02 < image[x][y][0] < 0.98 and 0.02 < image[x][y][1] < 0.98 and 0.02 < image[x][y][2] < 0.98:
+                nb_none_white += 1
+    return nb_none_white > total*threshold
 def KMeans_image(tile, show_images = False):
     # CHATGPT
     from mpl_toolkits.mplot3d import Axes3D  # Import the 3D plotting toolkit
