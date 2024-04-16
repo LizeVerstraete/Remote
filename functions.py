@@ -497,11 +497,13 @@ def show_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_re
                 print(x,y)
                 plt.subplot(1, 2, 1)
                 plt.imshow(fixed_tile)
-                plt.title('save HE tile')
+                plt.axis("off")
+                plt.title(f'save HE tile{location}')
                 plt.subplot(1, 2, 2)
                 moving_tile = normalize_image(moving_tile)
                 plt.imshow(moving_tile)
-                plt.title('save MUC tile')
+                plt.axis("off")
+                plt.title(f'save MUC tile{location}')
                 plt.show()
     return
 
@@ -748,3 +750,75 @@ def create_dataset(tile_names, soft_labels, location_data_csv):
 
         # Write the data
         csv_writer.writerows(data)
+
+
+
+def bspline(dfbr_transform, fixed_wsi_reader, moving_wsi_reader, location, size):
+    # Extract region from the fixed whole slide image
+    fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=2.5, units="power")
+
+    # DFBR transform is computed for level 7
+    # Hence it should be mapped to level 0 for AffineWSITransformer
+    dfbr_transform_level = 7
+    transform_level0 = dfbr_transform * [
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 1],
+    ]
+
+    # Extract transformed region from the moving whole slide image
+    tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
+    moving_tile = tfm.read_rect(location, size, resolution=2.5, units="power")
+
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(fixed_tile, cmap="gray")
+    axs[0].set_title("Fixed Tile")
+    axs[1].imshow(moving_tile, cmap="gray")
+    axs[1].set_title("Moving Tile")
+    plt.show()
+
+    fixed_mask = np.ones(shape=fixed_tile.shape, dtype=int)
+    moving_mask = np.ones(shape=moving_tile.shape, dtype=int)
+    bspline_transform = estimate_bspline_transform(
+        fixed_tile,
+        moving_tile,
+        fixed_mask,
+        moving_mask,
+        grid_space=200.0,
+        sampling_percent=0.1,
+    )
+
+    bspline_registered_image = apply_bspline_transform(
+        fixed_tile,
+        moving_tile,
+        bspline_transform,
+    )
+
+    tile_overlay = np.dstack(
+        (moving_tile[:, :, 0], fixed_tile[:, :, 0], moving_tile[:, :, 0]),
+    )
+    bspline_overlay = np.dstack(
+        (
+            bspline_registered_image[:, :, 0],
+            fixed_tile[:, :, 0],
+            bspline_registered_image[:, :, 0],
+        ),
+    )
+
+    _, axs = plt.subplots(1, 2, figsize=(15, 10))
+    axs[0].imshow(tile_overlay, cmap="gray")
+    axs[0].set_title("Before B-spline Transform")
+    axs[1].imshow(bspline_overlay, cmap="gray")
+    axs[1].set_title("After B-spline Transform")
+    plt.show()
+
+    # DETECT WELL REGISTERED REGIONS USING MI
+    bspline_registered_image_MI = preprocess_image(bspline_registered_image)
+    fixed_tile_MI = preprocess_image(fixed_tile)
+    fixed_tile_MI, bspline_registered_image_MI = match_histograms(fixed_tile_MI, bspline_registered_image_MI)
+
+    plt.imshow(bspline_registered_image_MI, cmap="gray")
+    plt.show()
+    plt.imshow(fixed_tile_MI, cmap='gray')
+    plt.show()
+    return
