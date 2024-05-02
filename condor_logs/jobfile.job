@@ -1,0 +1,13 @@
+Notification = Error
+executable = /esat/biomeddata/kkontras/r0786880/models/remote/condor_logs/script.sh
+initialdir = /esat/biomeddata/kkontras/r0786880/models/remote/condor_logs/logs
+Log          = $(ClusterId)_$(Process).log
+Output       = $(ClusterId)_$(Process).out
+Error        = $(ClusterId)_$(Process).err
+RequestCpus    = 12
+RequestMemory  = 40G
+RequestWalltime = 122000
+Request_GPUs   = 1
+NiceUser = True
+Requirements = ( GPUs_GlobalMemoryMb > 12500)
+queue

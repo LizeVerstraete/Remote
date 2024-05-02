@@ -67,8 +67,7 @@ def crop_image(slide, level, show_cropping=False):
 def normalize_image(image):
     # Convert image to float32 if not already
     image = image.astype(np.float32)
-    # Normalize pixel values to range [0, 1]
-    image_normalized = (image - np.min(image)) / (np.max(image) - np.min(image))
+    image_normalized = (image - np.mean(image)) / np.std(image)
     return image_normalized
 
 def store_normalized_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving):

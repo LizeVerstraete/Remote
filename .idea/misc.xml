@@ -3,7 +3,7 @@
   <component name="Black">
     <option name="sdkName" value="Remote Python 3.8.8 (sftp://r0786880@localhost:6000/esat/biomeddata/kkontras/r0786880/env/thesis_env/bin/python)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.8.8 (sftp://r0786880@localhost:6000/esat/biomeddata/kkontras/r0786880/env/thesis_env/bin/python3)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.8.8 (sftp://r0786880@localhost:6000/esat/biomeddata/kkontras/r0786880/env/thesis_env/bin/python3) (6)" project-jdk-type="Python SDK" />
   <component name="PyPackaging">
     <option name="earlyReleasesAsUpgrades" value="true" />
   </component>

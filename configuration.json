@@ -1,10 +1,11 @@
 {
   "name": "Configuration",
   "version": "1.0.0",
-  "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies/Janssen",
+  "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
+  "other_path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
   "tile_path" : "/esat/biomeddata/kkontras/r0786880/biopsy_data",
-  "tile_path_filtered": "/esat/biomeddata/kkontras/r0786880/biopsy_data_filtered",
-  "tile_path_filtered_aligned": "/esat/biomeddata/kkontras/r0786880/biopsy_data_filtered_aligned_small",
+  "tile_path_filtered": "/esat/biomeddata/kkontras/r0786880/biopsy_data_bigger_dataset_412",
+  "tile_path_filtered_aligned": "/esat/biomeddata/kkontras/r0786880/biopsy_data_filtered_aligned_small_256",
   "variables": {
     "size_image" : [100,100],
     "batch_size" : 32,

@@ -398,12 +398,14 @@ def align(path_moving_image, path_fixed_image, show_images=False):
 
     return dfbr_transform, fixed_wsi_reader, moving_wsi_reader
 
+
 def normalize_image(image):
     # Convert image to float32 if not already
     image = image.astype(np.float32)
     # Normalize pixel values to range [0, 1]
     image_normalized = (image - np.min(image)) / (np.max(image) - np.min(image))
     return image_normalized
+
 
 def store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
@@ -432,8 +434,8 @@ def store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_r
 
     tile_names = []
     print(xmax,ymax)
-    for x in range(xmin, xmax, size[0]*3):#REMOVE THE *3!!!!
-        for y in range(ymin, ymax, size[1]*3):#REMOVE THE *3!!!!
+    for x in range(xmin, xmax-size[0], size[0]):
+        for y in range(ymin, ymax-size[1], size[1]):
             location = (x, y)  # at base level 0
 
             # Extract region from the fixed whole slide image
@@ -755,7 +757,7 @@ def create_dataset(tile_names, soft_labels, location_data_csv):
 
 def bspline(dfbr_transform, fixed_wsi_reader, moving_wsi_reader, location, size):
     # Extract region from the fixed whole slide image
-    fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=2.5, units="power")
+    fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=20, units="power")
 
     # DFBR transform is computed for level 7
     # Hence it should be mapped to level 0 for AffineWSITransformer
@@ -768,7 +770,7 @@ def bspline(dfbr_transform, fixed_wsi_reader, moving_wsi_reader, location, size)
 
     # Extract transformed region from the moving whole slide image
     tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
-    moving_tile = tfm.read_rect(location, size, resolution=2.5, units="power")
+    moving_tile = tfm.read_rect(location, size, resolution=20, units="power")
 
     _, axs = plt.subplots(1, 2, figsize=(15, 10))
     axs[0].imshow(fixed_tile, cmap="gray")
