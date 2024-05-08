@@ -70,6 +70,24 @@ def normalize_image(image):
     image_normalized = (image - np.mean(image)) / np.std(image)
     return image_normalized
 
+def get_image_dimensions(path_fixed_image, path_moving_image):
+    slide_fixed = load_image(path_fixed_image)
+    slide_moving = load_image(path_moving_image)
+    level = 5
+    slide_np = np.array(slide_fixed.read_region((0, 0), level, slide_fixed.level_dimensions[level]).convert('RGB')).shape
+    slide_np2 = np.array(slide_moving.read_region((0, 0), level, slide_moving.level_dimensions[level]).convert('RGB')).shape
+    slide_np = tuple(dim * ((level + 1) ** 2) for dim in slide_np)
+    slide_np2 = tuple(dim * ((level + 1) ** 2) for dim in slide_np2)
+    _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
+    xmin_fixed = xmin_fixed * ((level+1) ** 2)
+    xmax_fixed = xmax_fixed * ((level+1) ** 2)
+    ymin_fixed = ymin_fixed * ((level+1) ** 2)
+    ymax_fixed = ymax_fixed * ((level+1) ** 2)
+    print("dimensions whole fixed slide", slide_np)
+    print("dimensions cropping", xmin_fixed,xmax_fixed,ymin_fixed,ymax_fixed)
+    print("dimensions whole moving slide", slide_np2)
+    return
+
 def store_normalized_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving):
     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
 
@@ -99,8 +117,9 @@ def store_normalized_tiles(path_fixed_image, path_moving_image, size, tile_dir_f
             moving_tile = normalize_image(np.array(moving_tile))
             if enough_filled(moving_tile, 0.25, 0.3):
                 tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x_moving, y_moving))
-                print("Now saving tile with title: ", tile_name_moving)
+                print("Now saving tile with title: ", tile_name_moving, "")
                 plt.imsave(tile_name_moving + ".png", moving_tile)
+    print("Done saving moving tiles",tile_dir_moving)
     for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
         for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
             location_fixed = (x_fixed, y_fixed)  # at base level 0
@@ -112,6 +131,7 @@ def store_normalized_tiles(path_fixed_image, path_moving_image, size, tile_dir_f
                 tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x_fixed, y_fixed))
                 print("Now saving tile with title: ", tile_name_fixed)
                 plt.imsave(tile_name_fixed + ".png", fixed_tile)
+    print("Done saving fixed tiles",tile_dir_fixed)
     return
 
 def show_normalized_tiles(path_fixed_image, path_moving_image, size):

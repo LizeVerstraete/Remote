@@ -457,6 +457,53 @@ def store_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_r
                 tile_names.append(fr'{tile_dir_fixed}\{x}_{y}.png')
     return tile_names
 
+def store_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
+    # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
+
+    slide = load_image(path_fixed_image)
+    level = 5
+    _, [ymin, ymax, xmin, xmax] = crop_image(slide, level)  # at level 5 since lower memory-load
+    xmin = xmin * ((level+1) ** 2)
+    xmax = xmax * ((level+1) ** 2)
+    ymin = ymin * ((level+1) ** 2)
+    ymax = ymax * ((level+1) ** 2)
+
+    # xmax, ymax = slide.level_dimensions[0]
+
+    # DFBR transform is computed for level 7
+    # Hence it should be mapped to level 0 for AffineWSITransformer
+    dfbr_transform_level = 7
+    transform_level0 = dfbr_transform * [
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 2 ** dfbr_transform_level],
+        [1, 1, 1],
+    ]
+
+    # Extract transformed region from the moving whole slide image
+    tfm = AffineWSITransformer(moving_wsi_reader, transform_level0)
+
+    tile_names = []
+    print(xmax,ymax)
+    print("Start saving: ", path_fixed_image)
+    for x in range(xmin, xmax-size[0], size[0]):
+        for y in range(ymin, ymax-size[1], size[1]):
+            location = (x, y)  # at base level 0
+
+            # Extract region from the fixed whole slide image
+            fixed_tile = fixed_wsi_reader.read_rect(location, size, resolution=20,
+                                                    units="power")  # resolution at 20xzoom
+            moving_tile = tfm.read_rect(location, size, resolution=20, units="power")  # resolution at 20xzoom
+
+            if enough_filled_no_norm(fixed_tile, 0.25, 0.3) and enough_filled_no_norm(moving_tile, 0.25, 0.3) and enough_entropy(moving_tile,5) and enough_entropy(fixed_tile,5):
+                print('store')
+                tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x, y))
+                plt.imsave(tile_name_fixed + ".png", fixed_tile)
+                tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x, y))
+                plt.imsave(tile_name_moving + ".png", moving_tile)
+                tile_names.append(fr'{tile_dir_fixed}\{x}_{y}.png')
+    print("Done saving: ", path_fixed_image)
+    return tile_names
+
 def show_normalized_aligned_tiles(path_fixed_image, dfbr_transform, fixed_wsi_reader, moving_wsi_reader, size, tile_dir_fixed, tile_dir_moving):
     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
 
@@ -824,3 +871,77 @@ def bspline(dfbr_transform, fixed_wsi_reader, moving_wsi_reader, location, size)
     plt.imshow(fixed_tile_MI, cmap='gray')
     plt.show()
     return
+
+def store_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving):
+    # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
+
+    slide_fixed = load_image(path_fixed_image)
+    level = 5
+    _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
+    xmin_fixed = xmin_fixed * ((level+1) ** 2)
+    xmax_fixed = xmax_fixed * ((level+1) ** 2)
+    ymin_fixed = ymin_fixed * ((level+1) ** 2)
+    ymax_fixed = ymax_fixed * ((level+1) ** 2)
+
+    slide_moving = load_image(path_moving_image)
+    level = 5
+    _, [ymin_moving, ymax_moving, xmin_moving, xmax_moving] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
+    xmin_moving = xmin_moving * ((level+1) ** 2)
+    xmax_moving = xmax_moving * ((level+1) ** 2)
+    ymin_moving = ymin_moving * ((level+1) ** 2)
+    ymax_moving = ymax_moving * ((level+1) ** 2)
+
+    print("Start saving moving tiles",tile_dir_moving)
+    for x_moving in range(xmin_moving, xmax_moving, size[0]):
+        for y_moving in range(ymin_moving, ymax_moving, size[1]):
+            location_moving = (x_moving, y_moving)  # at base level 0
+            # Extract region from the fixed whole slide image
+            moving_tile = np.array(slide_moving.read_region(location_moving, 0, size))  # resolution at 20xzoom
+            if enough_filled_no_norm(moving_tile, 0.25, 0.3) and enough_entropy(moving_tile,5) and variance_of_laplacian(moving_tile, 100):
+                tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x_moving, y_moving))
+                plt.imsave(tile_name_moving + ".png", moving_tile)
+    print("Done saving moving tiles",tile_dir_moving)
+    print("Start saving fixed tiles",tile_dir_fixed)
+    for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
+        for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
+            location_fixed = (x_fixed, y_fixed)  # at base level 0
+            fixed_tile = np.array(slide_fixed.read_region(location_fixed, 0, size))  # resolution at 20xzoom
+            if enough_filled_no_norm(fixed_tile, 0.25, 0.3) and enough_entropy(fixed_tile, 5) and variance_of_laplacian(fixed_tile,100):
+                tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x_fixed, y_fixed))
+                plt.imsave(tile_name_fixed + ".png", fixed_tile)
+    print("Done saving fixed tiles",tile_dir_fixed)
+    return
+
+def enough_filled_no_norm(image,threshold,sample_freq):
+    width = image.shape[0]
+    height = image.shape[1]
+    total = 0
+    nb_none_white = 0
+    for y in range(0,height,max(1, math.ceil(height * sample_freq))):
+        for x in range(0,width,max(1, math.ceil(width * sample_freq))):
+            total += 1
+            if 5 < image[x][y][0] < 250 and 5 < image[x][y][1] < 250 and 5 < image[x][y][2] < 250:
+                nb_none_white += 1
+    return nb_none_white > total*threshold
+
+def enough_entropy(image,threshold):
+    hist_red, _ = np.histogram(image[:, :, 0], bins=256, range=(0, 255))
+    hist_green, _ = np.histogram(image[:, :, 1], bins=256, range=(0, 255))
+    hist_blue, _ = np.histogram(image[:, :, 2], bins=256, range=(0, 255))
+    entropy_red = entropy(hist_red / np.sum(hist_red))
+    entropy_green = entropy(hist_green / np.sum(hist_green))
+    entropy_blue = entropy(hist_blue / np.sum(hist_blue))
+    if entropy_blue > threshold and entropy_green > threshold and entropy_red > threshold:
+        return True
+    else:
+        return False
+
+def entropy(p):
+    p = p[p != 0]  # Remove zeros to avoid log(0) errors
+    return -np.sum(p * np.log2(p))
+
+def variance_of_laplacian(image,threshold):
+    # compute the Laplacian of the image and then return the focus
+	# measure, which is simply the variance of the Laplacian
+    image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
+    return cv2.Laplacian(image, cv2.CV_64F).var() > threshold

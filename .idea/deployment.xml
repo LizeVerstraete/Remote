@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="r0786880@localhost:6000 password (33)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="r0786880@localhost:6000 password (3)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="r0786880@localhost:6000 password">
@@ -160,6 +160,7 @@
       <paths name="r0786880@localhost:6000 password (3)">
         <serverdata>
           <mappings>
+            <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/Remote" local="$PROJECT_DIR$" />
             <mapping deploy="/esat/biomeddata/kkontras/r0786880/models/remote" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
