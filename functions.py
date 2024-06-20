@@ -59,6 +59,7 @@ def load_image(path, show_raw_image=False):
         plt.figure()
         plt.imshow(thumbnail)
         plt.title('slide')
+        plt.axis("off")
         plt.show()
     return slide
 
@@ -86,14 +87,16 @@ def crop_image(slide, level, show_cropping=False):
     # crop the image within the boundaries
     # cropped_image = Image.fromarray(slide_np).crop((xmin, ymin, xmax, ymax))
     cropped_image = slide_np[xmin:xmax, ymin:ymax, :]
+    modified_crop = cropped_image.copy()
+    modified_crop[np.all(modified_crop == [0, 0, 0], axis=-1)] = [255, 255, 255]
 
     location = [xmin, xmax, ymin, ymax]
 
     # plot the cropped image
     if show_cropping:
         plt.figure()
-        plt.imshow(cropped_image)
-        plt.title('cropped image')
+        plt.imshow(modified_crop)
+        plt.tick_params(axis='both', which='both', bottom=False, left=False, labelbottom=False, labelleft=False)
         plt.show()
 
     # now crop the image at level 1 (assumed to be zoomlevel 20), but problem is takes too much memory, so not possible yet, TAKE THIS INTO ACCOUNT WHEN LOOKING AT XMIN ETC VALUES!!
@@ -606,48 +609,52 @@ def show_normalized_tiles(path_fixed_image, path_moving_image, size):
     slide_fixed = load_image(path_fixed_image)
     level = 5
     _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
-    xmin_fixed = xmin_fixed * ((level+1) ** 2)
-    xmax_fixed = xmax_fixed * ((level+1) ** 2)
-    ymin_fixed = ymin_fixed * ((level+1) ** 2)
-    ymax_fixed = ymax_fixed * ((level+1) ** 2)
+    xmin_fixed = xmin_fixed * 32
+    xmax_fixed = xmax_fixed * 32
+    ymin_fixed = ymin_fixed * 32
+    ymax_fixed = ymax_fixed * 32
 
     slide_moving = load_image(path_moving_image)
     level = 5
     _, [ymin_moving, ymax_moving, xmin_moving, xmax_moving] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
-    xmin_moving = xmin_moving * ((level+1) ** 2)
-    xmax_moving = xmax_moving * ((level+1) ** 2)
-    ymin_moving = ymin_moving * ((level+1) ** 2)
-    ymax_moving = ymax_moving * ((level+1) ** 2)
+    xmin_moving = xmin_moving * 32
+    xmax_moving = xmax_moving * 32
+    ymin_moving = ymin_moving * 32
+    ymax_moving = ymax_moving * 32
 
     print(xmax_fixed,ymax_fixed)
     print(xmax_moving,ymax_moving)
     for x_moving in range(xmin_moving, xmax_moving, size[0]):
         for y_moving in range(ymin_moving, ymax_moving, size[1]):
             location_moving = (x_moving, y_moving)  # at base level 0
-            moving_tile = slide_moving.read_region(location_moving, 0, size)  # resolution at 20xzoom
-            moving_tile = normalize_image(np.array(moving_tile))
+            moving_tile = np.array(slide_moving.read_region(location_moving, 0, size)) # resolution at 20xzoom
             if enough_filled(moving_tile, 0.25, 0.3):
                 plt.imshow(moving_tile)
-                plt.title("save")
+                plt.title("less than 25% background")
+                plt.tick_params(axis='both', which='both', length=0, labelsize=0)  # Hide tick marks and labels
                 plt.show()
             else:
                 plt.imshow(moving_tile)
-                plt.title("remove")
+                plt.title("more than 25% background")
+                plt.tick_params(axis='both', which='both', length=0, labelsize=0)  # Hide tick marks and labels
                 plt.show()
+            input('enter for next')
 
     for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
         for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
             location_fixed = (x_fixed, y_fixed)
-            fixed_tile = slide_fixed.read_region(location_fixed, 0, size)  # resolution at 20xzoom
-            fixed_tile = normalize_image(np.array(fixed_tile))
+            fixed_tile = np.array(slide_fixed.read_region(location_fixed, 0, size))  # resolution at 20xzoom
             if enough_filled(fixed_tile, 0.25, 0.3):
                 plt.imshow(fixed_tile)
-                plt.title("save")
+                plt.title("less than 25% background")
+                plt.tick_params(axis='both', which='both', length=0, labelsize=0)  # Hide tick marks and labels
                 plt.show()
             else:
                 plt.imshow(fixed_tile)
-                plt.title("remove")
+                plt.title("more than 25% background")
+                plt.tick_params(axis='both', which='both', length=0, labelsize=0)  # Hide tick marks and labels
                 plt.show()
+            input('enter for next')
     return
 
 def enough_filled(image,threshold,sample_freq):
@@ -872,28 +879,73 @@ def bspline(dfbr_transform, fixed_wsi_reader, moving_wsi_reader, location, size)
     plt.show()
     return
 
-def store_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving):
+def store_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving,locs_fixed,locs_moving):
     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
 
     slide_fixed = load_image(path_fixed_image)
     level = 5
-    _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
-    xmin_fixed = xmin_fixed * ((level+1) ** 2)
-    xmax_fixed = xmax_fixed * ((level+1) ** 2)
-    ymin_fixed = ymin_fixed * ((level+1) ** 2)
-    ymax_fixed = ymax_fixed * ((level+1) ** 2)
+    _, [ymin_fixedo, ymax_fixedo, xmin_fixedo, xmax_fixedo] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
+    xmin_fixedo = xmin_fixedo * ((level+1) ** 2)
+    xmax_fixedo = xmax_fixedo * ((level+1) ** 2)
+    ymin_fixedo = ymin_fixedo * ((level+1) ** 2)
+    ymax_fixedo = ymax_fixedo * ((level+1) ** 2)
+
+    awidthf = xmax_fixedo-xmin_fixedo
+    aheightf = ymax_fixedo-ymin_fixedo
 
     slide_moving = load_image(path_moving_image)
     level = 5
-    _, [ymin_moving, ymax_moving, xmin_moving, xmax_moving] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
-    xmin_moving = xmin_moving * ((level+1) ** 2)
-    xmax_moving = xmax_moving * ((level+1) ** 2)
-    ymin_moving = ymin_moving * ((level+1) ** 2)
-    ymax_moving = ymax_moving * ((level+1) ** 2)
+    _, [ymin_movingo, ymax_movingo, xmin_movingo, xmax_movingo] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
+    xmin_movingo = xmin_movingo * ((level+1) ** 2)
+    xmax_movingo = xmax_movingo * ((level+1) ** 2)
+    ymin_movingo = ymin_movingo * ((level+1) ** 2)
+    ymax_movingo = ymax_movingo * ((level+1) ** 2)
+
+    awidthm = xmax_movingo-xmin_movingo
+    aheightm = ymax_movingo-ymin_movingo
+
+    fixed_wsi_reader = WSIReader.open(path_fixed_image)
+    fixed_image_rgb = fixed_wsi_reader.slide_thumbnail(resolution=0.1563, units="power")
+    moving_wsi_reader = WSIReader.open(path_moving_image)
+    moving_image_rgb = moving_wsi_reader.slide_thumbnail(resolution=0.1563, units="power")
+    xf, yf = np.where((fixed_image_rgb[:, :, 0] != 255) | (fixed_image_rgb[:, :, 1] != 255) | (fixed_image_rgb[:, :, 2] != 255))
+    xm, ym = np.where((moving_image_rgb[:, :, 0] != 255) | (moving_image_rgb[:, :, 1] != 255) | (moving_image_rgb[:, :, 2] != 255))
+
+    # find image boundaries
+    xminf = np.min(xf)* ((5+1) ** 2)
+    xmaxf = np.max(xf)* ((5+1) ** 2)
+    yminf = np.min(yf)* ((5+1) ** 2)
+    ymaxf = np.max(yf)* ((5+1) ** 2)
+
+    fwidthf = xmaxf-xminf
+    fheightf = ymaxf-yminf
+
+    xminm = np.min(xm)* ((5+1) ** 2)
+    xmaxm = np.max(xm)* ((5+1) ** 2)
+    yminm = np.min(ym)* ((5+1) ** 2)
+    ymaxm = np.max(ym)* ((5+1) ** 2)
+
+    fwidthm = xmaxm-xminm
+    fheightm = ymaxm-yminm
+
+    [xmin_moving,xmax_moving,ymin_moving,ymax_moving] = locs_moving
+    [xmin_fixed,xmax_fixed,ymin_fixed,ymax_fixed] = locs_fixed
+
+    xrangeminf = xmin_fixed - xminf
+    xrangemaxf = xmax_fixed - xminf
+
+    yrangeminf = ymin_fixed - yminf
+    yrangemaxf = ymax_fixed - yminf
+
+    xrangeminm = xmin_moving - xminm
+    xrangemaxm = xmax_moving - xminm
+
+    yrangeminm = ymin_moving - yminm
+    yrangemaxm = ymax_moving - yminm
 
     print("Start saving moving tiles",tile_dir_moving)
-    for x_moving in range(xmin_moving, xmax_moving, size[0]):
-        for y_moving in range(ymin_moving, ymax_moving, size[1]):
+    for x_moving in range(int(xmin_movingo+xrangeminm*(awidthm/fwidthm)),int(xmin_movingo+xrangemaxm*(awidthm/fwidthm)), size[0]):
+        for y_moving in range(int(ymin_movingo+yrangeminm*(aheightm/fheightm)),int(ymin_movingo+yrangemaxm*(aheightm/fheightm)), size[1]):
             location_moving = (x_moving, y_moving)  # at base level 0
             # Extract region from the fixed whole slide image
             moving_tile = np.array(slide_moving.read_region(location_moving, 0, size))  # resolution at 20xzoom
@@ -902,8 +954,8 @@ def store_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_
                 plt.imsave(tile_name_moving + ".png", moving_tile)
     print("Done saving moving tiles",tile_dir_moving)
     print("Start saving fixed tiles",tile_dir_fixed)
-    for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
-        for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
+    for x_fixed in range(int(xmin_fixedo+xrangeminf*(awidthf/fwidthf)),int(xmin_fixedo+xrangemaxf*(awidthf/fwidthf)), size[0]):
+        for y_fixed in range(int(ymin_fixedo+yrangeminf*(aheightf/fheightf)),int(ymin_fixedo+yrangemaxf*(aheightf/fheightf)), size[1]):
             location_fixed = (x_fixed, y_fixed)  # at base level 0
             fixed_tile = np.array(slide_fixed.read_region(location_fixed, 0, size))  # resolution at 20xzoom
             if enough_filled_no_norm(fixed_tile, 0.25, 0.3) and enough_entropy(fixed_tile, 5) and variance_of_laplacian(fixed_tile,100):
@@ -911,6 +963,46 @@ def store_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_
                 plt.imsave(tile_name_fixed + ".png", fixed_tile)
     print("Done saving fixed tiles",tile_dir_fixed)
     return
+
+# def store_tiles(path_fixed_image, path_moving_image, size, tile_dir_fixed, tile_dir_moving):
+#     # https://tia-toolbox.readthedocs.io/en/latest/_notebooks/jnb/10-wsi-registration.html
+#
+#     slide_fixed = load_image(path_fixed_image)
+#     level = 5
+#     _, [ymin_fixed, ymax_fixed, xmin_fixed, xmax_fixed] = crop_image(slide_fixed, level)  # at level 5 since lower memory-load
+#     xmin_fixed = xmin_fixed * ((level+1) ** 2)
+#     xmax_fixed = xmax_fixed * ((level+1) ** 2)
+#     ymin_fixed = ymin_fixed * ((level+1) ** 2)
+#     ymax_fixed = ymax_fixed * ((level+1) ** 2)
+#
+#     slide_moving = load_image(path_moving_image)
+#     level = 5
+#     _, [ymin_moving, ymax_moving, xmin_moving, xmax_moving] = crop_image(slide_moving, level)  # at level 5 since lower memory-load
+#     xmin_moving = xmin_moving * ((level+1) ** 2)
+#     xmax_moving = xmax_moving * ((level+1) ** 2)
+#     ymin_moving = ymin_moving * ((level+1) ** 2)
+#     ymax_moving = ymax_moving * ((level+1) ** 2)
+#
+#     print("Start saving moving tiles",tile_dir_moving)
+#     for x_moving in range(xmin_moving, xmax_moving, size[0]):
+#         for y_moving in range(ymin_moving, ymax_moving, size[1]):
+#             location_moving = (x_moving, y_moving)  # at base level 0
+#             # Extract region from the fixed whole slide image
+#             moving_tile = np.array(slide_moving.read_region(location_moving, 0, size))  # resolution at 20xzoom
+#             if enough_filled_no_norm(moving_tile, 0.25, 0.3) and enough_entropy(moving_tile,5) and variance_of_laplacian(moving_tile, 100):
+#                 tile_name_moving = os.path.join(tile_dir_moving, os.path.split(tile_dir_moving)[1] +  '%d_%d' % (x_moving, y_moving))
+#                 plt.imsave(tile_name_moving + ".png", moving_tile)
+#     print("Done saving moving tiles",tile_dir_moving)
+#     print("Start saving fixed tiles",tile_dir_fixed)
+#     for x_fixed in range(xmin_fixed, xmax_fixed, size[0]):
+#         for y_fixed in range(ymin_fixed, ymax_fixed, size[1]):
+#             location_fixed = (x_fixed, y_fixed)  # at base level 0
+#             fixed_tile = np.array(slide_fixed.read_region(location_fixed, 0, size))  # resolution at 20xzoom
+#             if enough_filled_no_norm(fixed_tile, 0.25, 0.3) and enough_entropy(fixed_tile, 5) and variance_of_laplacian(fixed_tile,100):
+#                 tile_name_fixed = os.path.join(tile_dir_fixed, os.path.split(tile_dir_fixed)[1] +  '%d_%d' % (x_fixed, y_fixed))
+#                 plt.imsave(tile_name_fixed + ".png", fixed_tile)
+#     print("Done saving fixed tiles",tile_dir_fixed)
+#     return
 
 def enough_filled_no_norm(image,threshold,sample_freq):
     width = image.shape[0]
@@ -931,6 +1023,7 @@ def enough_entropy(image,threshold):
     entropy_red = entropy(hist_red / np.sum(hist_red))
     entropy_green = entropy(hist_green / np.sum(hist_green))
     entropy_blue = entropy(hist_blue / np.sum(hist_blue))
+    #print('entropy: ', entropy_blue,entropy_green,entropy_red)
     if entropy_blue > threshold and entropy_green > threshold and entropy_red > threshold:
         return True
     else:
@@ -944,4 +1037,5 @@ def variance_of_laplacian(image,threshold):
     # compute the Laplacian of the image and then return the focus
 	# measure, which is simply the variance of the Laplacian
     image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
+    #print("variance of Laplacian: ",cv2.Laplacian(image, cv2.CV_64F).var())
     return cv2.Laplacian(image, cv2.CV_64F).var() > threshold

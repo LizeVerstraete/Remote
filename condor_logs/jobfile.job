@@ -1,6 +1,6 @@
 Notification = Error
-executable = /esat/biomeddata/kkontras/r0786880/models/remote/condor_logs/script.sh
-initialdir = /esat/biomeddata/kkontras/r0786880/models/remote/condor_logs/logs
+executable = /esat/biomeddata/kkontras/r0786880/models/remote_new/condor_logs/script.sh
+initialdir = /esat/biomeddata/kkontras/r0786880/models/remote_new/condor_logs/logs
 Log          = $(ClusterId)_$(Process).log
 Output       = $(ClusterId)_$(Process).out
 Error        = $(ClusterId)_$(Process).err
